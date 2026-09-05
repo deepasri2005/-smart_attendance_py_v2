@@ -1,0 +1,65 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block title %}My Dashboard — Codevocado{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="mb-1">Welcome back, {{ user.first_name }}!</h3>
+    <p class="text-muted small mb-0">Here is your attendance summary for this month</p>
+  </div>
+  <span class="badge bg-primary-subtle text-primary px-3 py-2 border border-primary-subtle">
+    <i class="bi bi-calendar-event me-1"></i> {{ today.strftime('%B %d, %Y') }}
+  </span>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon bg-success-subtle text-success">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.present_days_this_month or 0 }}</h3>
+        <p>Days Present</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon bg-warning-subtle text-warning">
+        <i class="bi bi-clock-fill"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.late_days_this_month or 0 }}</h3>
+        <p>Late Arrivals</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon bg-info-subtle text-info">
+        <i class="bi bi-calendar-minus-fill"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.pending_leaves or 0 }}</h3>
+        <p>Pending Leaves</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div class="stat-icon bg-primary-subtle text-primary">
+        <i class="bi bi-bell-fill"></i>
+      </div>
+      <div class="stat-info">
+        <h3>{{ stats.unread_notifications or 0 }}</h3>
+        <p>Unread Alerts</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

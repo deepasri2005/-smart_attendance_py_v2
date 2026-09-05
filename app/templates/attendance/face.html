@@ -1,0 +1,698 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block title %}AI Face Attendance — Codevocado{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+  <div>
+    <h3 class="mb-1 fw-bold text-white"><i class="bi bi-person-bounding-box text-primary me-2"></i>AI Face Recognition
+      Attendance</h3>
+    <p class="text-secondary small mb-0">Biometric check-in & check-out scanner powered by OpenCV & 128D Face Encodings
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <button type="button" class="btn btn-primary px-3 py-2" data-bs-toggle="modal" data-bs-target="#registerFaceModal">
+      <i class="bi bi-person-plus-fill me-2"></i> Register Face Profile
+    </button>
+  </div>
+</div>
+
+<!-- Metrics Overview Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card border-0 bg-dark text-white p-3 shadow-sm rounded-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="p-3 bg-primary bg-opacity-25 rounded-3 text-primary fs-3">
+          <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <div>
+          <h4 class="mb-0 fw-bold">{{ registered_count if registered_count is defined else 1 }} / {{ total_users if
+            total_users is defined else 4 }}</h4>
+          <span class="text-secondary small">Registered Face Profiles</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 bg-dark text-white p-3 shadow-sm rounded-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="p-3 bg-success bg-opacity-25 rounded-3 text-success fs-3">
+          <i class="bi bi-calendar-check-fill"></i>
+        </div>
+        <div>
+          <h4 class="mb-0 fw-bold" id="todayCount">{{ today_records|length if today_records is defined else 0 }}</h4>
+          <span class="text-secondary small">Face Check-Ins Today</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card border-0 bg-dark text-white p-3 shadow-sm rounded-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="p-3 bg-info bg-opacity-25 rounded-3 text-info fs-3">
+          <i class="bi bi-cpu-fill"></i>
+        </div>
+        <div>
+          <h4 class="mb-0 fw-bold text-success">98.5%</h4>
+          <span class="text-secondary small">AI Model Confidence</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Face Scanner Section -->
+<div class="row g-4 mb-4">
+  <!-- Left Column: Camera / Upload Scanner -->
+  <div class="col-lg-7">
+    <div class="card border-0 bg-dark text-white p-4 shadow-lg rounded-4">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills card-header-pills" id="scannerTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active px-3 py-1 me-2 rounded-2" id="webcam-tab" data-bs-toggle="tab"
+              data-bs-target="#webcam-pane" type="button" role="tab">
+              <i class="bi bi-camera-video-fill me-1"></i> Live Webcam
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link px-3 py-1 rounded-2" id="upload-tab" data-bs-toggle="tab"
+              data-bs-target="#upload-pane" type="button" role="tab">
+              <i class="bi bi-upload me-1"></i> Image Upload
+            </button>
+          </li>
+      </div>
+
+      <div class="tab-content" id="scannerTabContent">
+        <!-- Tab 1: Live Webcam Feed -->
+        <div class="tab-pane fade show active" id="webcam-pane" role="tabpanel">
+          <div
+            class="scanner-container position-relative mx-auto rounded-4 overflow-hidden border border-secondary shadow"
+            style="max-width: 560px; height: 380px; background: #000;">
+            <video id="webcam" autoplay playsinline muted
+              style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+
+            <!-- Facial Target Reticle Overlay -->
+            <div class="scanner-target"></div>
+            <!-- Laser Line Scanner -->
+            <div class="scanner-line" id="scannerLine"></div>
+
+            <div id="camFallbackMsg" class="position-absolute top-50 start-50 translate-middle text-center d-none"
+              style="z-index: 5;">
+              <i class="bi bi-camera-video-off display-3 text-warning mb-2 d-block"></i>
+              <h6 class="text-white mb-1">Webcam Stream Unavailable</h6>
+              <p class="small text-secondary mb-3">Please grant camera permissions or use the <b>Image Upload</b> tab.
+              </p>
+              <button class="btn btn-sm btn-outline-primary" onclick="initWebcam()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Retry Camera Connection
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-4 text-center">
+            <button type="button" class="btn btn-primary btn-lg px-5 py-2 shadow fw-bold rounded-3" id="scanBtn">
+              <i class="bi bi-camera-fill me-2"></i> Scan & Mark Attendance
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 2: Upload Photo File Scanner -->
+        <div class="tab-pane fade" id="upload-pane" role="tabpanel">
+          <div class="border border-2 border-dashed border-secondary rounded-4 p-5 text-center bg-black bg-opacity-50"
+            id="dropZone"
+            style="cursor: pointer; min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <input type="file" id="fileInput" accept="image/*" class="d-none">
+            <div id="uploadPlaceholder">
+              <i class="bi bi-cloud-arrow-up display-2 text-primary mb-3 d-block"></i>
+              <h5 class="text-white mb-2">Upload Photo for Face Recognition</h5>
+              <p class="text-secondary small mb-3">Click or Drag & Drop face photo here (JPG, PNG, WEBP)</p>
+              <button type="button" class="btn btn-outline-primary btn-sm px-4"
+                onclick="document.getElementById('fileInput').click()">
+                <i class="bi bi-folder-fill me-1"></i> Select File
+              </button>
+            </div>
+
+            <div id="previewContainer" class="d-none w-100 position-relative">
+              <img id="uploadPreview" src="" alt="Preview" class="img-fluid rounded-3 border border-primary shadow mb-3"
+                style="max-height: 300px; object-fit: contain;">
+              <div>
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="resetUpload()">
+                  <i class="bi bi-x-circle me-1"></i> Change Photo
+                </button>
+                <button type="button" class="btn btn-primary px-4 shadow fw-bold" id="uploadScanBtn">
+                  <i class="bi bi-person-check-fill me-1"></i> Scan Uploaded Photo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Live Recognition Status & Feedback -->
+  <div class="col-lg-5">
+    <div
+      class="card border-0 bg-dark text-white p-4 h-100 d-flex flex-column justify-content-between shadow-lg rounded-4">
+      <div>
+        <h5 class="mb-4 text-white fw-bold d-flex align-items-center">
+          <i class="bi bi-person-check-fill text-primary me-2"></i>Recognition Results
+        </h5>
+
+        <!-- Default Waiting State -->
+        <div id="statusContainer" class="p-4 text-center rounded-3 bg-black bg-opacity-50 border border-secondary mb-4">
+          <div class="position-relative d-inline-block mb-3">
+            <i class="bi bi-person-bounding-box display-2 text-primary opacity-75"></i>
+          </div>
+          <h6 class="text-white mb-2 fw-semibold">Ready for Face Scanning</h6>
+          <p class="small text-secondary mb-0">Align your face with the camera or upload a photo to record check-in /
+            check-out.</p>
+        </div>
+
+        <!-- Success Match Result Box -->
+        <div id="matchDetails" class="d-none">
+          <div class="card bg-success bg-opacity-10 border border-success p-3 rounded-3 mb-4 text-white shadow">
+            <div class="d-flex align-items-center gap-3">
+              <div class="p-3 bg-success bg-opacity-25 rounded-circle text-success fs-2">
+                <i class="bi bi-check-circle-fill"></i>
+              </div>
+              <div class="flex-grow-1">
+                <div class="d-flex justify-content-between align-items-start">
+                  <h5 class="mb-1 text-white fw-bold" id="matchedName">Super Admin</h5>
+                  <span class="badge bg-success px-3 py-1" id="actionBadge">CHECK-IN</span>
+                </div>
+                <div class="small text-success mb-1" id="confidenceText">Match Confidence: 98.4%</div>
+                <p class="small mb-0 text-light opacity-75" id="matchMsg">Check-in recorded successfully.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Failed Match Result Box -->
+        <div id="unmatchedDetails" class="d-none">
+          <div class="card bg-danger bg-opacity-10 border border-danger p-3 rounded-3 mb-4 text-white shadow">
+            <div class="d-flex align-items-center gap-3">
+              <div class="p-3 bg-danger bg-opacity-25 rounded-circle text-danger fs-2">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+              </div>
+              <div>
+                <h6 class="mb-1 text-white fw-bold">No Match Found</h6>
+                <p class="small mb-0 text-danger-subtle" id="unmatchMsg">Face unrecognized or profile not registered.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Guidance & Instructions -->
+      <div class="border-top border-secondary pt-3 mt-3">
+        <h6 class="small text-white fw-bold mb-2"><i class="bi bi-info-circle-fill text-info me-1"></i> System
+          Instructions</h6>
+        <ul class="small text-secondary ps-3 mb-0">
+          <li class="mb-1">Ensure clear room lighting without harsh backlighting.</li>
+          <li class="mb-1">Position your head straight toward the scanner.</li>
+          <li>If un-registered, click <b class="text-white">Register Face Profile</b> above.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Today's Face Attendance Records Table -->
+<div class="card border-0 bg-dark text-white p-4 shadow-lg rounded-4 mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="mb-0 fw-bold text-white"><i class="bi bi-clock-history text-primary me-2"></i>Today's Attendance Log</h5>
+    <span class="badge bg-secondary px-3 py-2" id="logCountBadge">{{ today_records|length if today_records is defined
+      else 0 }} Logged Today</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-dark table-hover align-middle mb-0" id="attendanceLogTable">
+      <thead>
+        <tr class="text-secondary border-bottom border-secondary">
+          <th>Employee</th>
+          <th>Method</th>
+          <th>Check-In</th>
+          <th>Check-Out</th>
+          <th>Working Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if today_records and today_records|length > 0 %}
+        {% for r in today_records %}
+        <tr class="border-bottom border-secondary border-opacity-25">
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div
+                class="rounded-circle bg-primary bg-opacity-25 text-primary fw-bold d-flex align-items-center justify-content-center"
+                style="width: 36px; height: 36px;">
+                {{ r.user.first_name[0] if r.user and r.user.first_name else 'U' }}
+              </div>
+              <div>
+                <div class="fw-semibold text-white">{{ r.user.full_name if r.user else 'User #' ~ r.user_id }}</div>
+                <div class="small text-secondary">{{ r.user.email if r.user else '' }}</div>
+              </div>
+            </div>
+          </td>
+          <td><span class="badge bg-info-subtle text-info border border-info-subtle"><i
+                class="bi bi-person-bounding-box me-1"></i>{{ r.attendance_method or 'FACE' }}</span></td>
+          <td class="text-white">{{ r.check_in.strftime('%H:%M:%S') if r.check_in else '--' }}</td>
+          <td class="text-white">{{ r.check_out.strftime('%H:%M:%S') if r.check_out else '--' }}</td>
+          <td class="text-white">{{ r.working_minutes }} mins</td>
+          <td><span class="badge bg-success px-2 py-1">{{ r.attendance_status }}</span></td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr id="emptyLogRows">
+          <td colspan="6" class="text-center py-4 text-secondary">
+            <i class="bi bi-inbox fs-3 d-block mb-1 opacity-50"></i>
+            No face attendance check-ins recorded today.
+          </td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Register Face Profile -->
+<div class="modal fade" id="registerFaceModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border border-secondary shadow-lg rounded-4">
+      <div class="modal-header border-bottom border-secondary">
+        <h5 class="modal-title fw-bold text-white"><i class="bi bi-person-plus-fill text-primary me-2"></i>Register
+          Employee Face Profile</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="registerFaceForm">
+          <div class="mb-3">
+            <label class="form-label text-secondary small fw-bold">Select Employee</label>
+            <select class="form-select bg-black text-white border-secondary" id="regUserId" required>
+              {% if all_users and all_users|length > 0 %}
+              {% for u in all_users %}
+              <option value="{{ u.id }}" {% if u.id==user.id %}selected{% endif %}>
+                {{ u.full_name }} ({{ u.email }})
+              </option>
+              {% endfor %}
+              {% else %}
+              <option value="{{ user.id }}" selected>{{ user.full_name }} (Me)</option>
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="mb-3 text-center">
+            <label class="form-label text-secondary small fw-bold mb-2">Face Photo (Camera Capture or File
+              Upload)</label>
+            <ul class="nav nav-pills justify-content-center mb-3" id="regSourceTab">
+              <li class="nav-item">
+                <button type="button" class="nav-link active py-1 px-3 me-2 small rounded-2" id="reg-cam-tab"
+                  data-bs-toggle="tab" data-bs-target="#reg-cam-pane">Camera</button>
+              </li>
+              <li class="nav-item">
+                <button type="button" class="nav-link py-1 px-3 small rounded-2" id="reg-file-tab" data-bs-toggle="tab"
+                  data-bs-target="#reg-file-pane">File Upload</button>
+              </li>
+            </ul>
+
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="reg-cam-pane">
+                <div class="position-relative mx-auto rounded-3 overflow-hidden border border-secondary shadow"
+                  style="max-width: 340px; height: 220px; background: #000;">
+                  <video id="regWebcam" autoplay playsinline muted
+                    style="width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1);"></video>
+                </div>
+              </div>
+              <div class="tab-pane fade" id="reg-file-pane">
+                <input type="file" id="regFileInput" accept="image/*"
+                  class="form-control bg-black text-white border-secondary mb-2">
+                <div id="regFilePreviewContainer" class="d-none mt-2">
+                  <img id="regFilePreview" src="" alt="Reg Preview" class="img-fluid rounded-3 border border-primary"
+                    style="max-height: 180px;">
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-top border-secondary">
+        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary px-4 fw-bold" id="captureRegBtn">
+          <i class="bi bi-camera-fill me-1"></i> Capture & Save Profile
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .scanner-target {
+    position: absolute;
+    top: 15%;
+    left: 20%;
+    right: 20%;
+    bottom: 15%;
+    border: 2px dashed rgba(99, 102, 241, 0.7);
+    border-radius: 20px;
+    pointer-events: none;
+  }
+
+  .scanner-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #6366f1, #a855f7, transparent);
+    box-shadow: 0 0 20px #6366f1;
+    animation: scanAnim 2.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes scanAnim {
+    0% {
+      top: 5%;
+    }
+
+    100% {
+      top: 92%;
+    }
+  }
+
+  .nav-pills .nav-link.active {
+    background-color: #6366f1 !important;
+    color: white !important;
+  }
+
+  .nav-pills .nav-link {
+    color: #9ca3af;
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+
+  .nav-pills .nav-link:hover {
+    color: white;
+  }
+</style>
+
+<script>
+  let video = document.getElementById('webcam');
+  let regVideo = document.getElementById('regWebcam');
+  let canvas = document.createElement('canvas');
+  let isProcessing = false;
+  let autoScanInterval = null;
+  let currentBase64 = null;
+  let regFileBase64 = null;
+
+  // Reg File Input Handler
+  document.getElementById('regFileInput').addEventListener('change', function (e) {
+    if (e.target.files && e.target.files[0]) {
+      let file = e.target.files[0];
+      let reader = new FileReader();
+      reader.onload = function (evt) {
+        regFileBase64 = evt.target.result;
+        document.getElementById('regFilePreview').src = regFileBase64;
+        document.getElementById('regFilePreviewContainer').classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Initialize Webcam Feed
+  function initWebcam() {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" } })
+        .then(stream => {
+          video.srcObject = stream;
+          regVideo.srcObject = stream;
+          document.getElementById('camFallbackMsg').classList.add('d-none');
+        })
+        .catch(err => {
+          console.warn("Webcam access error:", err);
+          document.getElementById('camFallbackMsg').classList.remove('d-none');
+        });
+    } else {
+      document.getElementById('camFallbackMsg').classList.remove('d-none');
+    }
+  }
+
+  initWebcam();
+
+  // Capture current video frame as base64 string
+  function getFrameBase64() {
+    if (!video.videoWidth) return null;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.85);
+  }
+
+  // Send base64 frame image to face attendance check-in API
+  function processFaceCheckin(imageData) {
+    if (isProcessing || !imageData) return;
+    isProcessing = true;
+
+    const scanBtn = document.getElementById('scanBtn');
+    const uploadScanBtn = document.getElementById('uploadScanBtn');
+    const origScanHtml = scanBtn ? scanBtn.innerHTML : '';
+    const origUploadHtml = uploadScanBtn ? uploadScanBtn.innerHTML : '';
+
+    if (scanBtn) {
+      scanBtn.disabled = true;
+      scanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Scanning...';
+    }
+    if (uploadScanBtn) {
+      uploadScanBtn.disabled = true;
+      uploadScanBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Scanning...';
+    }
+
+    fetch("{{ url_for('attendance.api_face_checkin') }}", {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imageData })
+    })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('statusContainer').classList.add('d-none');
+
+        if (data.success) {
+          document.getElementById('unmatchedDetails').classList.add('d-none');
+          document.getElementById('matchDetails').classList.remove('d-none');
+
+          document.getElementById('matchedName').innerText = data.user.full_name;
+
+          let badge = document.getElementById('actionBadge');
+          if (data.action === 'CHECK_IN') {
+            badge.className = 'badge bg-success px-3 py-1';
+            badge.innerText = 'CHECK-IN';
+          } else if (data.action === 'CHECK_OUT') {
+            badge.className = 'badge bg-primary px-3 py-1';
+            badge.innerText = 'CHECK-OUT';
+          } else {
+            badge.className = 'badge bg-warning text-dark px-3 py-1';
+            badge.innerText = 'RECORDED';
+          }
+
+          document.getElementById('confidenceText').innerText = `Match Confidence: ${data.confidence}%`;
+          document.getElementById('matchMsg').innerText = data.message;
+
+          // Update Today's Attendance Table
+          updateOrAddLogRow(data.user, data.attendance);
+
+          if (typeof showToast === 'function') {
+            showToast(data.message, data.action === 'EXISTS' ? 'info' : 'success');
+          }
+        } else {
+          document.getElementById('matchDetails').classList.add('d-none');
+          document.getElementById('unmatchedDetails').classList.remove('d-none');
+          document.getElementById('unmatchMsg').innerText = data.message || 'Face unrecognized or no match in database.';
+        }
+      })
+      .catch(err => {
+        console.error("Face Check-in Error:", err);
+        alert("An error occurred during face scan processing.");
+      })
+      .finally(() => {
+        isProcessing = false;
+        if (scanBtn) {
+          scanBtn.disabled = false;
+          scanBtn.innerHTML = origScanHtml;
+        }
+        if (uploadScanBtn) {
+          uploadScanBtn.disabled = false;
+          uploadScanBtn.innerHTML = origUploadHtml;
+        }
+      });
+  }
+
+  // Manual Scan button click
+  document.getElementById('scanBtn').addEventListener('click', function () {
+    let imgData = getFrameBase64();
+    if (imgData) {
+      processFaceCheckin(imgData);
+    } else {
+      alert("Camera stream not ready. Please try using Image Upload tab.");
+    }
+  });
+
+  // File Upload Handler
+  const fileInput = document.getElementById('fileInput');
+  const dropZone = document.getElementById('dropZone');
+
+  dropZone.addEventListener('click', (e) => {
+    if (e.target.id !== 'uploadScanBtn' && !e.target.closest('#previewContainer')) {
+      fileInput.click();
+    }
+  });
+
+  fileInput.addEventListener('change', function (e) {
+    if (e.target.files && e.target.files[0]) {
+      let file = e.target.files[0];
+      let reader = new FileReader();
+      reader.onload = function (evt) {
+        currentBase64 = evt.target.result;
+        document.getElementById('uploadPreview').src = currentBase64;
+        document.getElementById('uploadPlaceholder').classList.add('d-none');
+        document.getElementById('previewContainer').classList.remove('d-none');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  function resetUpload() {
+    currentBase64 = null;
+    fileInput.value = '';
+    document.getElementById('previewContainer').classList.add('d-none');
+    document.getElementById('uploadPlaceholder').classList.remove('d-none');
+  }
+
+  document.getElementById('uploadScanBtn').addEventListener('click', function () {
+    if (currentBase64) {
+      processFaceCheckin(currentBase64);
+    }
+  });
+
+  // Register Face Profile handler
+  document.getElementById('captureRegBtn').addEventListener('click', function () {
+    let base64Image = null;
+    let activeTab = document.querySelector('#regSourceTab .nav-link.active').id;
+
+    if (activeTab === 'reg-file-tab' && regFileBase64) {
+      base64Image = regFileBase64;
+    } else if (regVideo.videoWidth) {
+      canvas.width = regVideo.videoWidth || 640;
+      canvas.height = regVideo.videoHeight || 480;
+      let ctx = canvas.getContext('2d');
+      ctx.drawImage(regVideo, 0, 0, canvas.width, canvas.height);
+      base64Image = canvas.toDataURL('image/jpeg', 0.9);
+    }
+
+    if (!base64Image) {
+      alert("Please select an image file or ensure camera feed is ready.");
+      return;
+    }
+
+    let userId = document.getElementById('regUserId').value;
+
+    fetch("{{ url_for('attendance.api_register_face') }}", {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: userId,
+        image: base64Image
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Success: " + data.message);
+          let modalEl = document.getElementById('registerFaceModal');
+          let modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+          location.reload();
+        } else {
+          alert("Error: " + (data.message || 'Registration failed'));
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("Registration error occurred.");
+      });
+  });
+
+  // Helper to format ISO or datetime string to time HH:MM:SS
+  function formatTimeStr(dtStr) {
+    if (!dtStr) return '--';
+    if (dtStr.includes('T')) {
+      let parts = dtStr.split('T')[1].split('.')[0];
+      return parts;
+    } else if (dtStr.includes(' ')) {
+      return dtStr.split(' ')[1];
+    }
+    return dtStr;
+  }
+
+  // Helper to update or prepend dynamic row to attendance table
+  function updateOrAddLogRow(user, att) {
+    let emptyRow = document.getElementById('emptyLogRows');
+    if (emptyRow) emptyRow.remove();
+
+    let tbody = document.querySelector('#attendanceLogTable tbody');
+    let userName = user.full_name || 'User';
+    let userEmail = user.email || '';
+
+    let inStr = att ? formatTimeStr(att.check_in) : '--';
+    let outStr = att ? formatTimeStr(att.check_out) : '--';
+    let workStr = att && att.working_minutes ? `${att.working_minutes} mins` : '0 mins';
+    let status = att ? att.attendance_status : 'PRESENT';
+
+    // Look for existing row for this user
+    let existingRow = null;
+    tbody.querySelectorAll('tr').forEach(tr => {
+      if (tr.innerText.includes(userName)) {
+        existingRow = tr;
+      }
+    });
+
+    if (existingRow) {
+      existingRow.className = 'border-bottom border-secondary border-opacity-25 bg-success bg-opacity-10';
+      existingRow.cells[2].innerText = inStr;
+      existingRow.cells[3].innerText = outStr;
+      existingRow.cells[4].innerText = workStr;
+      existingRow.cells[5].innerHTML = `<span class="badge bg-success px-2 py-1">${status}</span>`;
+    } else {
+      let tr = document.createElement('tr');
+      tr.className = 'border-bottom border-secondary border-opacity-25 bg-primary bg-opacity-10';
+      tr.innerHTML = `
+      <td>
+        <div class="d-flex align-items-center gap-2">
+          <div class="rounded-circle bg-primary bg-opacity-25 text-primary fw-bold d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+            ${userName.charAt(0)}
+          </div>
+          <div>
+            <div class="fw-semibold text-white">${userName}</div>
+            <div class="small text-secondary">${userEmail}</div>
+          </div>
+        </div>
+      </td>
+      <td><span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-person-bounding-box me-1"></i>FACE</span></td>
+      <td class="text-white">${inStr}</td>
+      <td class="text-white">${outStr}</td>
+      <td class="text-white">${workStr}</td>
+      <td><span class="badge bg-success px-2 py-1">${status}</span></td>
+    `;
+      tbody.insertBefore(tr, tbody.firstChild);
+
+      let badge = document.getElementById('logCountBadge');
+      if (badge) {
+        let curr = parseInt(badge.innerText) || 0;
+        badge.innerText = `${curr + 1} Logged Today`;
+      }
+    }
+  }
+</script>
+{% endblock %}

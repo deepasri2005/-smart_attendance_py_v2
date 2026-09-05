@@ -1,0 +1,163 @@
+{% extends "layouts/base.html" %}
+{% block meta_description %}Login to Codevocado — AI-Powered Smart Attendance & Employee Management{% endblock %}
+{% block title %}Login — Codevocado{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="auth-page">
+
+  <!-- Left Panel -->
+  <div class="auth-panel-left">
+    <div class="auth-brand">
+      <div class="auth-logo">
+        <i class="bi bi-cpu-fill"></i>
+      </div>
+      <h1 class="auth-brand-name">Codevocado</h1>
+    </div>
+
+    <div class="auth-hero">
+      <h2>AI-Powered<br><span class="gradient-text">Workforce Management</span></h2>
+      <p>Manage attendance, leaves, tours, and your entire workforce from one intelligent platform.</p>
+
+      <div class="auth-features">
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon"><i class="bi bi-person-badge-fill"></i></div>
+          <div>
+            <h6>Face Recognition</h6>
+            <p>Secure biometric attendance with AI</p>
+          </div>
+        </div>
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon"><i class="bi bi-geo-alt-fill"></i></div>
+          <div>
+            <h6>Geo-Fenced Attendance</h6>
+            <p>Location-validated mobile check-in</p>
+          </div>
+        </div>
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon"><i class="bi bi-camera-video-fill"></i></div>
+          <div>
+            <h6>CCTV Automation</h6>
+            <p>Automatic attendance via camera feeds</p>
+          </div>
+        </div>
+        <div class="auth-feature-item">
+          <div class="auth-feature-icon"><i class="bi bi-graph-up-arrow"></i></div>
+          <div>
+            <h6>Smart Analytics</h6>
+            <p>Real-time dashboards and reports</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="auth-panel-footer">
+      <p>© {{ 2025 }} Codevocado. All rights reserved.</p>
+    </div>
+  </div>
+
+  <!-- Right Panel / Login Form -->
+  <div class="auth-panel-right">
+    <div class="auth-form-container">
+
+      <div class="auth-form-header">
+        <h2>Welcome Back</h2>
+        <p>Sign in to your account to continue</p>
+      </div>
+
+      <!-- Flash Messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        <i
+          class="bi bi-{{ 'check-circle-fill' if category == 'success' else 'exclamation-triangle-fill' if category == 'warning' else 'x-circle-fill' if category == 'danger' else 'info-circle-fill' }} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+      {% endwith %}
+
+      <!-- Login Form -->
+      <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-icon-wrapper">
+            <i class="bi bi-person-fill input-icon"></i>
+            <input type="text" id="username" name="username" class="form-control auth-input"
+              placeholder="Enter your username" value="{{ username or '' }}" required autocomplete="username" autofocus>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-icon-wrapper">
+            <i class="bi bi-lock-fill input-icon"></i>
+            <input type="password" id="password" name="password" class="form-control auth-input"
+              placeholder="Enter your password" required autocomplete="current-password">
+            <button type="button" class="password-toggle" id="pwToggle" aria-label="Toggle password visibility">
+              <i class="bi bi-eye-slash" id="pwToggleIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Remember Me + Forgot Password -->
+        <div class="form-options">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="rememberMe" name="remember_me">
+            <label class="form-check-label" for="rememberMe">Remember me</label>
+          </div>
+          <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-login" id="loginBtn">
+          <span id="loginBtnText">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+          </span>
+          <span id="loginSpinner" class="d-none">
+            <span class="spinner-border spinner-border-sm me-2"></span>Signing in...
+          </span>
+        </button>
+      </form>
+
+      <div class="auth-form-footer">
+        <p class="text-muted small text-center mt-4">
+          Protected by enterprise-grade security.
+          <br>Unauthorized access is prohibited.
+        </p>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Password toggle
+  document.getElementById('pwToggle').addEventListener('click', function () {
+    const pwInput = document.getElementById('password');
+    const icon = document.getElementById('pwToggleIcon');
+    if (pwInput.type === 'password') {
+      pwInput.type = 'text';
+      icon.className = 'bi bi-eye';
+    } else {
+      pwInput.type = 'password';
+      icon.className = 'bi bi-eye-slash';
+    }
+  });
+
+  // Loading state on submit
+  document.getElementById('loginForm').addEventListener('submit', function () {
+    document.getElementById('loginBtnText').classList.add('d-none');
+    document.getElementById('loginSpinner').classList.remove('d-none');
+    document.getElementById('loginBtn').disabled = true;
+  });
+</script>
+{% endblock %}

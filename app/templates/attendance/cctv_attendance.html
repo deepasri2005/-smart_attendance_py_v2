@@ -1,0 +1,133 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block title %}CCTV Attendance Monitoring — Codevocado{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h3 class="mb-1">CCTV AI Attendance Streams</h3>
+    <p class="text-muted small mb-0">Automated face recognition and attendance logging via registered CCTV feeds</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('cctv.index') }}" class="btn btn-primary">
+      <i class="bi bi-camera-video me-1"></i> Manage Cameras
+    </a>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Active Camera Feeds Grid -->
+  <div class="col-lg-8">
+    <div class="row g-3" id="cameraGrid">
+      {% if cameras %}
+        {% for cam in cameras %}
+        <div class="col-md-6">
+          <div class="glass-card p-3 position-relative overflow-hidden">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-semibold small text-truncate">{{ cam.name }}</span>
+              <span class="badge bg-success-subtle text-success">
+                <span class="badge-dot me-1"></span> {{ cam.status }}
+              </span>
+            </div>
+
+            <div class="cctv-feed-mockup position-relative rounded-3 overflow-hidden bg-black d-flex align-items-center justify-content-center" style="height: 200px;">
+              <video id="cctvVideo-{{ cam.id }}" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+              <div class="position-absolute top-0 start-0 m-2 badge bg-dark opacity-75">
+                <i class="bi bi-geo-alt me-1"></i> {{ cam.camera_location or 'Main Entrance' }}
+              </div>
+              <button class="btn btn-sm btn-light position-absolute bottom-0 end-0 m-2 trigger-detect-btn" data-cam-id="{{ cam.id }}">
+                <i class="bi bi-magic me-1"></i> Trigger Detection
+              </button>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12">
+          <div class="glass-card p-5 text-center text-muted">
+            <i class="bi bi-camera-video-off display-3 d-block mb-3"></i>
+            <h5>No Active CCTV Cameras Configured</h5>
+            <p class="small">Add your IP camera RTSP streams to enable automatic attendance detection.</p>
+            <a href="{{ url_for('cctv.index') }}" class="btn btn-primary mt-2">
+              <i class="bi bi-plus-lg me-1"></i> Add CCTV Camera
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Real-Time Detection Feed Stream -->
+  <div class="col-lg-4">
+    <div class="glass-card p-4 h-100">
+      <h6 class="mb-3"><i class="bi bi-activity text-primary me-2"></i>Live Detection Logs</h6>
+
+      <div class="detection-stream" style="max-height: 480px; overflow-y: auto;">
+        {% if recent_logs %}
+          {% for log in recent_logs %}
+          <div class="d-flex align-items-center gap-3 p-2 border-bottom">
+            <div class="stat-icon bg-primary-subtle text-primary" style="width:36px; height:36px; font-size:0.9rem;">
+              <i class="bi bi-person-bounding-box"></i>
+            </div>
+            <div class="flex-1 overflow-hidden">
+              <p class="mb-0 fw-semibold small text-truncate">{{ log.user.full_name if log.user else 'Unknown Face' }}</p>
+              <span class="small text-muted">{{ log.detected_at.strftime('%H:%M:%S') if log.detected_at else '' }}</span>
+            </div>
+            {% if log.attendance_marked %}
+              <span class="badge bg-success-subtle text-success">Marked</span>
+            {% else %}
+              <span class="badge bg-secondary-subtle text-secondary">Logged</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center py-5 text-muted small">
+            <i class="bi bi-card-list fs-2 d-block mb-2"></i>
+            No CCTV detections logged yet today.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Connect camera webcams / feeds
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => {
+    document.querySelectorAll('[id^="cctvVideo-"]').forEach(v => {
+      v.srcObject = stream;
+    });
+  })
+  .catch(err => console.error(err));
+
+// Trigger Detection demo handler
+document.querySelectorAll('.trigger-detect-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    let camId = this.getAttribute('data-cam-id');
+    let v = document.getElementById(`cctvVideo-${camId}`);
+
+    let canvas = document.createElement('canvas');
+    canvas.width = v.videoWidth || 640;
+    canvas.height = v.videoHeight || 480;
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(v, 0, 0, canvas.width, canvas.height);
+    let base64Image = canvas.toDataURL('image/jpeg', 0.85);
+
+    fetch("{{ url_for('cctv.api_process_frame') }}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ camera_id: camId, image: base64Image })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.data.matched) {
+        showToast(`CCTV Matched: ${data.data.user.full_name} (${data.data.confidence}%)`, 'success');
+      } else {
+        showToast(data.data.message || 'CCTV Face unrecognized', 'warning');
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

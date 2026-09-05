@@ -1,0 +1,384 @@
+{% extends "layouts/base.html" %}
+{% block meta_description %}Codevocado — AI-Powered Smart Attendance & Employee Management System with Face Recognition, CCTV Attendance, Geo-Fencing, and Multi-Organization Support{% endblock %}
+{% block title %}Codevocado — AI-Powered Workforce Management{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+{% endblock %}
+
+{% block body %}
+
+<!-- ════════════════════ NAVBAR ════════════════════ -->
+<nav class="navbar navbar-expand-lg home-nav sticky-top" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('main.home') }}">
+      <div class="nav-logo-icon"><i class="bi bi-cpu-fill"></i></div>
+      <span>Codevocado</span>
+    </a>
+
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mx-auto">
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+        <li class="nav-item"><a class="nav-link" href="#solutions">Solutions</a></li>
+        <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+      </ul>
+      <div class="d-flex gap-2 mt-3 mt-lg-0">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-nav-login">
+          <i class="bi bi-box-arrow-in-right me-1"></i> Login
+        </a>
+        <a href="#contact" class="btn btn-nav-demo">Request Demo</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════ HERO ════════════════════ -->
+<section class="hero-section" id="home">
+  <div class="hero-bg-grid"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+
+  <div class="container">
+    <div class="row align-items-center min-vh-100">
+      <div class="col-lg-6">
+        <div class="hero-badge mb-4">
+          <span class="badge-dot"></span>
+          <span>AI-Powered Workforce Intelligence</span>
+        </div>
+        <h1 class="hero-title">
+          Smart Attendance &<br>
+          <span class="gradient-text">Workforce Management</span>
+        </h1>
+        <p class="hero-subtitle">
+          Manage your employees, attendance, leaves, work locations, and workforce
+          operations from one intelligent platform powered by advanced AI.
+        </p>
+        <div class="hero-actions">
+          <a href="{{ url_for('auth.login') }}" class="btn btn-hero-primary">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Login to Dashboard
+          </a>
+          <a href="#solutions" class="btn btn-hero-secondary">
+            <i class="bi bi-play-circle me-2"></i>See Solutions
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <span class="stat-value">99.8%</span>
+            <span class="stat-label">Accuracy</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat">
+            <span class="stat-value">500+</span>
+            <span class="stat-label">Organizations</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat">
+            <span class="stat-value">50K+</span>
+            <span class="stat-label">Employees</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 d-none d-lg-block">
+        <div class="hero-visual">
+          <div class="hero-card hero-card-main">
+            <div class="hc-header">
+              <div class="hc-dot green"></div>
+              <div class="hc-dot yellow"></div>
+              <div class="hc-dot red"></div>
+              <span class="ms-2 small text-muted">Live Dashboard</span>
+            </div>
+            <div class="hc-stats-row">
+              <div class="hc-stat-box">
+                <i class="bi bi-people-fill"></i>
+                <span class="hc-number">247</span>
+                <span class="hc-label">Present</span>
+              </div>
+              <div class="hc-stat-box accent">
+                <i class="bi bi-person-x-fill"></i>
+                <span class="hc-number">12</span>
+                <span class="hc-label">Absent</span>
+              </div>
+              <div class="hc-stat-box warning">
+                <i class="bi bi-clock-fill"></i>
+                <span class="hc-number">8</span>
+                <span class="hc-label">Late</span>
+              </div>
+            </div>
+            <div class="hc-bar-chart">
+              <div class="hc-bar" style="height:60%"><span>Mon</span></div>
+              <div class="hc-bar" style="height:80%"><span>Tue</span></div>
+              <div class="hc-bar active" style="height:95%"><span>Wed</span></div>
+              <div class="hc-bar" style="height:70%"><span>Thu</span></div>
+              <div class="hc-bar" style="height:85%"><span>Fri</span></div>
+            </div>
+          </div>
+          <div class="hero-card hero-card-face">
+            <i class="bi bi-person-bounding-box fs-2 text-primary"></i>
+            <div class="face-scan-ring"></div>
+            <span class="small">Face Recognized</span>
+            <span class="badge bg-success">✓ Checked In</span>
+          </div>
+          <div class="hero-card hero-card-geo">
+            <i class="bi bi-geo-alt-fill text-success fs-3"></i>
+            <span class="small">Within Geo-fence</span>
+            <div class="geo-pulse"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ FEATURES ════════════════════ -->
+<section class="section-features" id="features">
+  <div class="container">
+    <div class="section-header text-center">
+      <span class="section-badge">Everything you need</span>
+      <h2 class="section-title">Powerful Features for<br><span class="gradient-text">Modern Workforce</span></h2>
+      <p class="section-subtitle">A complete suite of tools to manage every aspect of your employee lifecycle.</p>
+    </div>
+
+    <div class="row g-4">
+      {% set features = [
+        ('bi-person-bounding-box', 'Face Attendance', 'AI-powered biometric check-in with liveness detection and anti-spoofing.', 'primary'),
+        ('bi-camera-video-fill', 'CCTV Attendance', 'Automatic attendance marking via CCTV cameras with face recognition.', 'success'),
+        ('bi-geo-alt-fill', 'Geo-Fenced Attendance', 'Location-validated check-in with Haversine-based geo-fence validation.', 'info'),
+        ('bi-pencil-square', 'Manual Attendance', 'Authorized manual attendance with full audit trail and approval workflow.', 'warning'),
+        ('bi-calendar2-check-fill', 'Leave Management', 'Multi-type leave with balance tracking, approval workflows and calendar view.', 'danger'),
+        ('bi-house-fill', 'Work From Home', 'WFH requests with daily task reports and optional location logging.', 'primary'),
+        ('bi-map-fill', 'Tour Management', 'Official duty applications with expense tracking and multi-level approvals.', 'success'),
+        ('bi-speedometer2', 'Real-Time Dashboard', 'Role-specific dashboards with live analytics, charts, and KPI cards.', 'info'),
+        ('bi-bell-fill', 'Smart Notifications', 'In-app, email, and SMS notifications for all critical workflow events.', 'warning'),
+        ('bi-file-bar-graph-fill', 'Advanced Reports', 'Detailed reports with CSV, Excel, and PDF export capabilities.', 'danger'),
+        ('bi-buildings-fill', 'Multi-Organization', 'Full SaaS multi-tenancy with strict organization-level data isolation.', 'primary'),
+        ('bi-shield-lock-fill', 'Role-Based Access', 'Dynamic RBAC with module/sub-module level permission management.', 'success'),
+      ] %}
+
+      {% for icon, title, desc, color in features %}
+      <div class="col-sm-6 col-lg-4 col-xl-3">
+        <div class="feature-card">
+          <div class="feature-icon feature-icon-{{ color }}">
+            <i class="bi {{ icon }}"></i>
+          </div>
+          <h5 class="feature-title">{{ title }}</h5>
+          <p class="feature-desc">{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ SOLUTIONS ════════════════════ -->
+<section class="section-solutions" id="solutions">
+  <div class="container">
+    <div class="section-header text-center">
+      <span class="section-badge">Attendance Methods</span>
+      <h2 class="section-title">Multiple Ways to<br><span class="gradient-text">Track Attendance</span></h2>
+    </div>
+
+    <div class="solutions-timeline">
+      {% set solutions = [
+        ('bi-person-bounding-box', 'Face Recognition Attendance', '01',
+         'Employees check-in using their face via any camera-enabled device. AI-powered recognition with liveness detection ensures only live faces are accepted.'),
+        ('bi-camera-video-fill', 'CCTV-Based Automatic Attendance', '02',
+         'CCTV cameras continuously monitor entry/exit points. The system automatically marks attendance when an employee\'s face is detected within configurable cooldown windows.'),
+        ('bi-geo-alt-fill', 'Mobile Geo Attendance', '03',
+         'Employees check-in via their mobile browser using GPS. The Haversine algorithm validates they are within the allowed office geo-fence radius.'),
+        ('bi-qr-code-scan', 'QR Code Attendance', '04 (Coming Soon)',
+         'Dynamic QR codes with expiry validation and location verification. Ready for future deployment without database schema changes.'),
+        ('bi-pencil-square', 'Manual Attendance', '05',
+         'Authorized admins can mark or correct attendance with mandatory reason, full audit trail, and approval workflow for corrections.'),
+      ] %}
+
+      {% for icon, title, num, desc in solutions %}
+      <div class="solution-item {% if loop.index is odd %}solution-left{% else %}solution-right{% endif %}">
+        <div class="solution-badge">{{ num }}</div>
+        <div class="solution-card">
+          <div class="solution-icon"><i class="bi {{ icon }}"></i></div>
+          <h4>{{ title }}</h4>
+          <p>{{ desc }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ ROLES ════════════════════ -->
+<section class="section-roles">
+  <div class="container">
+    <div class="section-header text-center mb-5">
+      <span class="section-badge">Role-Based Access</span>
+      <h2 class="section-title">Built for Every<br><span class="gradient-text">Level of Your Organization</span></h2>
+    </div>
+    <div class="row g-4">
+      {% set roles = [
+        ('bi-crown-fill', 'Super Admin', '#a855f7',
+         ['Manage all organizations', 'Full system configuration', 'Global analytics & reports', 'User & permission management', 'Audit log access']),
+        ('bi-building-fill', 'Organization Admin', '#3b82f6',
+         ['Manage organization settings', 'Department & shift management', 'Leave & tour approvals', 'Organization-level reports', 'Employee management']),
+        ('bi-person-gear-fill', 'Employee Admin', '#10b981',
+         ['Attendance monitoring', 'Manual attendance marking', 'Attendance approval', 'Regularization handling', 'Attendance reports']),
+        ('bi-person-fill', 'Employee', '#f59e0b',
+         ['Face/geo/manual check-in', 'Apply for leave & WFH', 'Submit tour requests', 'View own attendance', 'Receive notifications']),
+      ] %}
+      {% for icon, name, color, perms in roles %}
+      <div class="col-sm-6 col-xl-3">
+        <div class="role-card">
+          <div class="role-icon" style="background: {{ color }}22; color: {{ color }}">
+            <i class="bi {{ icon }}"></i>
+          </div>
+          <h5 class="role-name" style="color: {{ color }}">{{ name }}</h5>
+          <ul class="role-perms">
+            {% for perm in perms %}
+            <li><i class="bi bi-check2" style="color: {{ color }}"></i> {{ perm }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ ABOUT ════════════════════ -->
+<section class="section-about" id="about">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="section-badge">About Codevocado</span>
+        <h2 class="section-title mt-3">Enterprise-Grade AI for<br><span class="gradient-text">Modern Workplaces</span></h2>
+        <p class="section-subtitle">
+          Codevocado is a production-ready, multi-tenant SaaS platform built with Python Flask,
+          OpenCV face recognition, and a modern responsive UI. Designed for organizations
+          of all sizes with enterprise-level security and scalability.
+        </p>
+        <div class="about-tech-stack">
+          {% for tech in ['Python Flask', 'MySQL 8', 'OpenCV AI', 'JWT Auth', 'Redis', 'Docker'] %}
+          <span class="tech-badge">{{ tech }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="about-metrics">
+          {% for value, label in [('99.8%', 'Face Recognition Accuracy'), ('< 2s', 'Attendance Processing Time'), ('256-bit', 'Data Encryption'), ('24/7', 'System Availability')] %}
+          <div class="about-metric">
+            <span class="about-metric-value gradient-text">{{ value }}</span>
+            <span class="about-metric-label">{{ label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ CONTACT / CTA ════════════════════ -->
+<section class="section-cta" id="contact">
+  <div class="container">
+    <div class="cta-card">
+      <div class="cta-orb"></div>
+      <h2>Ready to Transform Your<br><span class="gradient-text">Workforce Management?</span></h2>
+      <p>Join hundreds of organizations already using Codevocado to streamline their operations.</p>
+      <div class="d-flex gap-3 justify-content-center flex-wrap mt-4">
+        <a href="{{ url_for('auth.login') }}" class="btn btn-cta-primary">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Login Now
+        </a>
+        <a href="mailto:info@codevocado.in" class="btn btn-cta-secondary">
+          <i class="bi bi-envelope me-2"></i>Contact Sales
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ FOOTER ════════════════════ -->
+<footer class="home-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="footer-brand">
+          <div class="footer-logo"><i class="bi bi-cpu-fill"></i></div>
+          <span>Codevocado</span>
+        </div>
+        <p class="footer-desc">AI-Powered Smart Attendance & Employee Management System for modern enterprises.</p>
+        <div class="footer-social">
+          <a href="#" aria-label="Twitter"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" aria-label="LinkedIn"><i class="bi bi-linkedin"></i></a>
+          <a href="#" aria-label="GitHub"><i class="bi bi-github"></i></a>
+        </div>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="footer-heading">Product</h6>
+        <ul class="footer-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#solutions">Solutions</a></li>
+          <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6 class="footer-heading">Legal</h6>
+        <ul class="footer-links">
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Service</a></li>
+          <li><a href="#">Cookie Policy</a></li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <h6 class="footer-heading">Contact</h6>
+        <ul class="footer-links">
+          <li><i class="bi bi-envelope me-2"></i>info@codevocado.in</li>
+          <li><i class="bi bi-telephone me-2"></i>+91 7007643084</li>
+          <li><i class="bi bi-geo-alt me-2"></i>Bangalore, India</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© {{ 2025 }} Codevocado. All rights reserved. Built with Python Flask & AI.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Navbar scroll effect
+window.addEventListener('scroll', function() {
+  const nav = document.getElementById('mainNav');
+  if (window.scrollY > 50) {
+    nav.classList.add('nav-scrolled');
+  } else {
+    nav.classList.remove('nav-scrolled');
+  }
+});
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+
+// Intersection Observer for animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('animated');
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.feature-card, .role-card, .solution-card').forEach(el => {
+  observer.observe(el);
+});
+</script>
+{% endblock %}
